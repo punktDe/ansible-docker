@@ -1,0 +1,46 @@
+{% macro volume_options(volume) -%}
+    {%- set options = [] -%}
+
+    {%- if volume.read_only|default(false) -%}
+        {%- set _ = options.append('ro') -%}
+    {%- endif -%}
+
+    {%- if volume.relabel|default(false) and volume.relabel != 'unshared' -%}
+        {%- set _ = options.append('z') -%}
+    {%- elif volume.relabel|default(false) and volume.relabel == 'unshared' -%}
+        {%- set _ = options.append('Z') -%}
+    {%- endif -%}
+
+    {%- for option in options -%}
+        {%- if loop.first -%}
+            :
+        {%- endif -%}
+        {{- option -}}
+        {%- if not loop.last -%}
+            ,
+        {%- endif -%}
+    {%- endfor -%}
+{%- endmacro %}
+
+{% macro ExecStart(container) -%}
+ExecStart=docker run --name={{ container.container_name }} --rm \
+          {%- for container_dir, volume in (container.volumes.items()|rejectattr('1', 'eq', none)|rejectattr('1.host_dir', 'eq', none) if container.volumes|default(none) else []) %}
+          --volume={{ volume.host_dir|quote }}:{{ container_dir|quote }}{{ volume_options(volume) }} \
+          {%- endfor %}
+          {%- for bind, port in (container.ports.items()|rejectattr('1', 'eq', none) if container.ports|default(none) else []) %}
+          --publish={{ bind|quote }}:{{ port|quote }} \
+          {%- endfor %}
+          {%- for variable, value in (container.environment.items()|rejectattr('1', 'eq', none) if container.environment|default(none) else []) %}
+          --env={{ variable|quote }}={{ value|quote }} \
+          {%- endfor %}
+          {%- if container.network|default(none) %}
+          --network={{ container.network|quote }} \
+          {%- endif %}
+          {%- if container.entrypoint|default(none) %}
+          --entrypoint={{ container.entrypoint|quote }} \
+          {%- endif %}
+          {{ container.image|quote }}{{ '' if not container.command|default(none) or container.command.items()|rejectattr('1', 'eq', none)|first|default(none) is none else ' \\' }}
+          {%- for _, argument in (container.command.items()|rejectattr('1', 'eq', none) if container.command|default(none) else []) %}
+          {{ argument|quote }}{% if not loop.last %} \{%- endif %}
+          {%- endfor %}
+{%- endmacro %}

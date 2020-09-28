@@ -1,0 +1,5 @@
+- name: Install Docker and docker-compose
+  apt:
+    name:
+      - docker.io
+      - docker-compose

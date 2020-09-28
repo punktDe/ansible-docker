@@ -1,0 +1,21 @@
+- name: Template Docker daemon config
+  copy:
+    content: "{{ docker['daemon.json']|to_nice_json }}"
+    dest: /etc/docker/daemon.json
+  notify: Restart Docker
+
+- name: Create directory for Docker service overrides
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+
+- name: Template Docker service overrides
+  copy:
+    content: |
+      #jinja2: trim_blocks: False
+      [Service]
+      {%- for var, val in docker.daemon_environment.items() %}
+      Environment={{ var }}={{ val }}
+      {%- endfor %}
+    dest: /etc/systemd/system/docker.service.d/ansible.conf
+  notify: Restart Docker
