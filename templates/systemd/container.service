@@ -1,3 +1,9 @@
+{% macro Unit(container) -%}
+[Unit]
+Requires=docker.service
+After=docker.service
+{%- endmacro %}
+
 {% macro volume_options(volume) -%}
     {%- set options = [] -%}
 
@@ -43,4 +49,22 @@ ExecStart=docker run --name={{ container.container_name }} --rm \
           {%- for _, argument in (container.command.items()|rejectattr('1', 'eq', none) if container.command|default(none) else []) %}
           {{ argument|quote }}{% if not loop.last %} \{%- endif %}
           {%- endfor %}
+{%- endmacro %}
+
+{% macro Service(container) -%}
+[Service]
+{{ ExecStart(container) }}
+{%- endmacro %}
+
+{% macro Install(container) -%}
+[Install]
+WantedBy=multi-user.target
+{%- endmacro %}
+
+{% macro All(container) -%}
+{{ Unit(container) }}
+
+{{ Service(container) }}
+
+{{ Install(container) }}
 {%- endmacro %}
