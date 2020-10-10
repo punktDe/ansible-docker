@@ -3,3 +3,10 @@
     name:
       - docker.io
       - docker-compose
+
+- name: Enable and start Docker
+  systemd:
+    daemon_reload: yes
+    name: docker
+    enabled: yes
+    state: started
