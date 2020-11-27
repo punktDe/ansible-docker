@@ -53,6 +53,8 @@ ExecStart=docker run --name={{ container.container_name }} --rm \
 
 {% macro Service(container) -%}
 [Service]
+Restart={{ container.restart|default('always', true) }}
+RestartSec={{ container.restart_sec|default(10, true) }}
 {{ ExecStart(container) }}
 {%- endmacro %}
 
