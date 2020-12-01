@@ -28,34 +28,34 @@ After=docker.service
     {%- endfor -%}
 {%- endmacro %}
 
-{% macro ExecStart(container) -%}
-ExecStart=docker run --name={{ container.container_name }} --rm \
-          {%- for container_dir, volume in (container.volumes.items()|rejectattr('1', 'eq', none)|rejectattr('1.host_dir', 'eq', none) if container.volumes|default(none) else []) %}
-          --volume={{ volume.host_dir|quote }}:{{ container_dir|quote }}{{ volume_options(volume) }} \
-          {%- endfor %}
-          {%- for bind, port in (container.ports.items()|rejectattr('1', 'eq', none) if container.ports|default(none) else []) %}
-          --publish={{ bind|quote }}:{{ port|quote }} \
-          {%- endfor %}
-          {%- for variable, value in (container.environment.items()|rejectattr('1', 'eq', none) if container.environment|default(none) else []) %}
-          --env={{ variable|quote }}={{ value|quote }} \
-          {%- endfor %}
-          {%- if container.network|default(none) %}
-          --network={{ container.network|quote }} \
-          {%- endif %}
-          {%- if container.entrypoint|default(none) %}
-          --entrypoint={{ container.entrypoint|quote }} \
-          {%- endif %}
-          {{ container.image|quote }}{{ '' if not container.command|default(none) or container.command.items()|rejectattr('1', 'eq', none)|first|default(none) is none else ' \\' }}
-          {%- for _, argument in (container.command.items()|rejectattr('1', 'eq', none) if container.command|default(none) else []) %}
-          {{ argument|quote }}{% if not loop.last %} \{%- endif %}
-          {%- endfor %}
-{%- endmacro %}
-
 {% macro Service(container) -%}
 [Service]
-Restart={{ container.restart|default('always', true) }}
-RestartSec={{ container.restart_sec|default(10, true) }}
-{{ ExecStart(container) }}
+Restart=always
+RestartSec=10
+TimeoutStopSec=60
+ExecStartPre=bash -c "{ docker stop --time=50 {{ container.container_name }} && docker rm {{ container.container_name }}; } || :"
+ExecStartPre=docker create --name={{ container.container_name }} --rm \
+             {%- for container_dir, volume in (container.volumes.items()|rejectattr('1', 'eq', none)|rejectattr('1.host_dir', 'eq', none) if container.volumes|default(none) else []) %}
+             --volume={{ volume.host_dir|quote }}:{{ container_dir|quote }}{{ volume_options(volume) }} \
+             {%- endfor %}
+             {%- for bind, port in (container.ports.items()|rejectattr('1', 'eq', none) if container.ports|default(none) else []) %}
+             --publish={{ bind|quote }}:{{ port|quote }} \
+             {%- endfor %}
+             {%- for variable, value in (container.environment.items()|rejectattr('1', 'eq', none) if container.environment|default(none) else []) %}
+             --env={{ variable|quote }}={{ value|quote }} \
+             {%- endfor %}
+             {%- if container.network|default(none) %}
+             --network={{ container.network|quote }} \
+             {%- endif %}
+             {%- if container.entrypoint|default(none) %}
+             --entrypoint={{ container.entrypoint|quote }} \
+             {%- endif %}
+             {{ container.image|quote }}{{ '' if not container.command|default(none) or container.command.items()|rejectattr('1', 'eq', none)|first|default(none) is none else ' \\' }}
+             {%- for _, argument in (container.command.items()|rejectattr('1', 'eq', none) if container.command|default(none) else []) %}
+             {{ argument|quote }}{% if not loop.last %} \{%- endif %}
+{%- endfor %}
+ExecStart=docker start --attach {{ container.container_name }}
+ExecStop=docker stop --time=50 {{ container.container_name }}
 {%- endmacro %}
 
 {% macro Install(container) -%}
