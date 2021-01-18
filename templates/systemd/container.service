@@ -61,6 +61,7 @@ ExecStop=docker stop --time=50 {{ container.container_name }}
 {% macro Install(container) -%}
 [Install]
 WantedBy=multi-user.target
+WantedBy=docker.service
 {%- endmacro %}
 
 {% macro All(container) -%}
