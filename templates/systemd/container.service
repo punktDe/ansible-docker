@@ -37,7 +37,7 @@ TimeoutStopSec=60
 ExecStartPre=-docker pull {{ container.image|quote }}
 {% endif -%}
 ExecStartPre=bash -c "{ docker stop --time=50 {{ container.container_name }} && docker rm {{ container.container_name }}; } || :"
-{%- for volume in container.volumes.values()|selectattr('host_dir', 'string')|selectattr('owner', 'number') %}
+{%- for volume in (container.volumes|default({})).values()|selectattr('host_dir', 'string')|selectattr('owner', 'number') %}
 ExecStartPre=bash -c 'mkdir -p -- "$1" && chown -- "$2" "$1"' _ {{ volume.host_dir|quote }} {{ volume.owner|quote }}
 {%- endfor %}
 ExecStartPre=docker create --name={{ container.container_name }} --rm \
