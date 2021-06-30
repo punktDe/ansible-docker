@@ -1,0 +1,14 @@
+[Unit]
+Description=systemd-resolved proxy for Docker
+After=docker.service
+PartOf=docker.service
+
+[Service]
+User=dnsmasq
+ExecStart=dnsmasq --no-daemon --no-hosts --interface=docker0 --no-dhcp-interface=docker0 --except-interface=lo --bind-interfaces
+ProtectSystem=strict
+NoNewPrivileges=yes
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=docker.service

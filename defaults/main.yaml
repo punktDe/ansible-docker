@@ -1,3 +1,9 @@
 docker:
-  daemon.json: {}
+  daemon.json:
+    dns:
+      - 100.96.0.1
+    default-address-pools:
+      - base: 100.96.0.0/16
+        size: 24
   daemon_environment: {}
+  use_ufw: "{{ ansible_distribution == 'Ubuntu' }}"

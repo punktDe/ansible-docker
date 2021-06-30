@@ -1,5 +1,10 @@
 - name: Restart Docker
   systemd:
-    daemon_reload: yes
     name: docker
+    state: restarted
+
+- name: Restart docker-systemd-resolved-proxy
+  when: not docker_systemd_resolved_proxy_start_result.changed
+  systemd:
+    name: docker-systemd-resolved-proxy
     state: restarted
