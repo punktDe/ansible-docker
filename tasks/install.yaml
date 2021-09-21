@@ -1,8 +1,9 @@
-- name: Install Docker and docker-compose
+- name: Install Docker, docker-compose and pigz
   apt:
     name:
       - docker.io
       - docker-compose
+      - pigz
 
 - name: Enable and start Docker
   systemd:
