@@ -61,7 +61,7 @@ ExecStartPre=docker create --name={{ container.container_name }} --rm \
              {{ argument|quote }}{% if not loop.last %} \{%- endif %}
 {%- endfor %}
 ExecStart=docker start --attach {{ container.container_name }}
-ExecStop=docker stop --time=50 {{ container.container_name }}
+ExecStop=docker stop --time={{ container.container_stop_timeout|default(50) }} {{ container.container_name }}
 {%- endmacro %}
 
 {% macro Install(container) -%}
