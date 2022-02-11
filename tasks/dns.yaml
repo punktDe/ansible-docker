@@ -1,3 +1,7 @@
+- name: Install dnsmasq
+  apt:
+    name: dnsmasq-base
+
 - name: Install docker-systemd-resolved-proxy service
   template:
     src: systemd/docker-systemd-resolved-proxy.service
