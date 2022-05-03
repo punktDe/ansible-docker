@@ -22,7 +22,7 @@
 
 - name: Add UFW rule to allow accessing docker-systemd-resolved-proxy from containers
   when: docker.use_ufw
-  loop: "{{ [docker['daemon.json']['default-address-pools'][0]['base']]|product(['tcp', 'udp']) }}"
+  loop: "{{ [docker['daemon.json']['default-address-pools'][0]['base']]|product(['tcp', 'udp'])|list }}"
   ufw:
     from_ip: "{{ item.0 }}"
     to_ip: "{{ item.0|ipaddr(1)|ipaddr('address') }}"
