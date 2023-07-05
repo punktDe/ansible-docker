@@ -1,12 +1,55 @@
-- name: Install Docker, docker-compose and pigz
-  apt:
+- name: Ensure old versions of Docker are not installed
+  ansible.builtin.package:
     name:
-      - docker.io
+      - docker
+      - docker-engine
+    state: absent
+
+- name: Ensure dependencies are installed
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+    state: present
+
+- name: Ensure additional dependencies are installed (on Ubuntu < 20.04 and any other systems)
+  ansible.builtin.apt:
+    name: gnupg2
+    state: present
+  when: ansible_distribution != 'Ubuntu' or ansible_distribution_version is version('20.04', '<')
+
+- name: Ensure additional dependencies are installed (on Ubuntu >= 20.04).
+  ansible.builtin.apt:
+    name: gnupg
+    state: present
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('20.04', '>=')
+
+- name: Add Docker apt key
+  ansible.builtin.get_url:
+    url: "{{ docker.repository.key }}"
+    dest: /etc/apt/trusted.gpg.d/docker.asc
+    mode: '0644'
+    force: true
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: "{{ docker.repository.apt }}"
+    state: present
+    update_cache: true
+
+- name: Install Docker, docker-compose and pigz
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - docker-ce-rootless-extras
+      - containerd.io
       - docker-compose
+      - docker-compose-plugin
       - pigz
 
 - name: Enable and start Docker
-  systemd:
+  ansible.builtin.systemd:
     daemon_reload: yes
     name: docker
     enabled: yes

@@ -1,16 +1,23 @@
 - name: Template Docker daemon config
-  copy:
-    content: "{{ docker['daemon.json']|to_nice_json }}"
+  ansible.builtin.copy:
+    content: "{{ docker['daemon.json'] | to_nice_json }}"
     dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
   notify: Restart Docker
 
 - name: Create directory for Docker service overrides
-  file:
+  ansible.builtin.file:
     path: /etc/systemd/system/docker.service.d
     state: directory
+    mode: "0755"
+    owner: root
+    group: root
 
 - name: Template Docker service overrides
-  copy:
+  tags: skip_ansible_lint
+  ansible.builtin.copy:
     content: |
       #jinja2: trim_blocks: False
       [Service]
@@ -18,4 +25,7 @@
       Environment={{ var }}={{ val }}
       {%- endfor %}
     dest: /etc/systemd/system/docker.service.d/ansible.conf
+    mode: "0644"
+    owner: root
+    group: root
   notify: Restart Docker
