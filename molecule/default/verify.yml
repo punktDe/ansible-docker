@@ -10,3 +10,30 @@
         name: hello-world
         image: hello-world
         state: started
+
+    - name: Stop hello-world container
+      community.docker.docker_container:
+        name: hello-world
+        image: hello-world
+        state: stopped
+
+    - name: Create a folder for a docker-compose stack
+      ansible.builtin.file:
+        state: directory
+        path: /var/opt/compose
+        recurse: yes
+
+    - name: Template an example docker-compose stack
+      ansible.builtin.copy:
+        content: |
+          services:
+            hello_world:
+              image: hello-world
+        dest: /var/opt/compose/docker-compose.yml
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: Start the docker-compose stack
+      community.docker.docker_compose:
+        project_src: /var/opt/compose
