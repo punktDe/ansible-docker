@@ -1,6 +1,8 @@
-- name: Install dnsmasq
+- name: Install dnsmasq and ufw
   ansible.builtin.apt:
-    name: dnsmasq-base
+    name:
+      - dnsmasq-base
+      - ufw
 
 - name: Install docker-systemd-resolved-proxy service
   ansible.builtin.template:
