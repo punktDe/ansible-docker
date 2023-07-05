@@ -5,6 +5,8 @@
   hosts: all
   gather_facts: false
   tasks:
-    - name: Example assertion
-      ansible.builtin.assert:
-        that: true
+    - name: Run hello-world container
+      community.docker.docker_container:
+        name: hello-world
+        image: hello-world
+        state: started
