@@ -41,15 +41,24 @@
     update_cache: true
 
 - name: Install Docker, docker-compose and pigz
-  ansible.builtin.apt:
-    name:
-      - docker-ce
-      - docker-ce-cli
-      - docker-ce-rootless-extras
-      - containerd.io
-      - docker-compose
-      - docker-compose-plugin
-      - pigz
+  block:
+    - name: Attempt installation
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - docker-ce-rootless-extras
+          - containerd.io
+          - docker-compose
+          - docker-compose-plugin
+          - pigz
+  rescue:
+    - name: Fix the Ubuntu Jammy error
+      ansible.builtin.replace:
+        path: /etc/systemd/system/multi-user.target.wants/docker.service
+        regexp: "fd://"
+        replace: "unix://"
+      when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('22.04', '>=')
 
 - name: Enable and start Docker
   ansible.builtin.systemd:
