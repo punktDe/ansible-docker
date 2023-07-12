@@ -43,6 +43,7 @@
 - name: Install Docker, docker-compose and pigz
   block:
     - name: Attempt installation
+      ignore_errors: "{{ ansible_check_mode }}"
       ansible.builtin.apt:
         name:
           - docker-ce
