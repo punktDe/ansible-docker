@@ -1,31 +1,36 @@
-- name: Install dnsmasq
-  apt:
-    name: dnsmasq-base
+- name: Install dnsmasq and ufw
+  ansible.builtin.apt:
+    name:
+      - dnsmasq-base
+      - ufw
 
 - name: Install docker-systemd-resolved-proxy service
-  template:
+  ansible.builtin.template:
     src: systemd/docker-systemd-resolved-proxy.service
     dest: /etc/systemd/system/docker-systemd-resolved-proxy.service
+    owner: root
+    group: root
+    mode: 0644
   notify: Restart docker-systemd-resolved-proxy
 
 - name: Enable docker-systemd-resolved-proxy service
-  systemd:
+  ansible.builtin.systemd:
     daemon_reload: yes
     name: docker-systemd-resolved-proxy
     enabled: yes
 
 - name: Start docker-systemd-resolved-proxy service
-  systemd:
+  ansible.builtin.systemd:
     name: docker-systemd-resolved-proxy
     state: started
   register: docker_systemd_resolved_proxy_start_result
 
 - name: Add UFW rule to allow accessing docker-systemd-resolved-proxy from containers
   when: docker.use_ufw
-  loop: "{{ [docker['daemon.json']['default-address-pools'][0]['base']]|product(['tcp', 'udp'])|list }}"
-  ufw:
+  loop: "{{ [docker['daemon.json']['default-address-pools'][0]['base']] | product(['tcp', 'udp']) | list }}"
+  community.general.ufw:
     from_ip: "{{ item.0 }}"
-    to_ip: "{{ item.0|ipaddr(1)|ipaddr('address') }}"
+    to_ip: "{{ item.0 | ipaddr(1) | ipaddr('address') }}"
     proto: "{{ item.1 }}"
     port: "53"
     rule: allow

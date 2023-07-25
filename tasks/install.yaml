@@ -1,12 +1,68 @@
-- name: Install Docker, docker-compose and pigz
-  apt:
+- name: Ensure old versions of Docker are not installed
+  ansible.builtin.package:
     name:
-      - docker.io
-      - docker-compose
-      - pigz
+      - docker
+      - docker-engine
+    state: absent
+
+- name: Ensure dependencies are installed
+  ansible.builtin.apt:
+    update_cache: yes
+    name:
+      - apt-transport-https
+      - ca-certificates
+    state: present
+
+- name: Ensure additional dependencies are installed (on Ubuntu < 20.04 and any other systems)
+  ansible.builtin.apt:
+    update_cache: yes
+    name: gnupg2
+    state: present
+  when: ansible_distribution != 'Ubuntu' or ansible_distribution_version is version('20.04', '<')
+
+- name: Ensure additional dependencies are installed (on Ubuntu >= 20.04).
+  ansible.builtin.apt:
+    update_cache: yes
+    name: gnupg
+    state: present
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('20.04', '>=')
+
+- name: Add Docker apt key
+  ansible.builtin.get_url:
+    url: "{{ docker.repository.key }}"
+    dest: /etc/apt/trusted.gpg.d/docker.asc
+    mode: '0644'
+    force: true
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: "{{ docker.repository.apt }}"
+    state: present
+    update_cache: true
+
+- name: Install Docker, docker-compose and pigz
+  block:
+    - name: Attempt installation
+      ignore_errors: "{{ ansible_check_mode }}"
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - docker-ce-rootless-extras
+          - containerd.io
+          - docker-compose
+          - docker-compose-plugin
+          - pigz
+  rescue:
+    - name: Fix the Ubuntu Jammy error
+      ansible.builtin.replace:
+        path: /etc/systemd/system/multi-user.target.wants/docker.service
+        regexp: "fd://"
+        replace: "unix://"
+      when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('22.04', '>=')
 
 - name: Enable and start Docker
-  systemd:
+  ansible.builtin.systemd:
     daemon_reload: yes
     name: docker
     enabled: yes

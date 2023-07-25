@@ -1,10 +1,10 @@
 - name: Restart Docker
-  systemd:
+  ansible.builtin.systemd:
     name: docker
     state: restarted
 
 - name: Restart docker-systemd-resolved-proxy
   when: not docker_systemd_resolved_proxy_start_result.changed
-  systemd:
+  ansible.builtin.systemd:
     name: docker-systemd-resolved-proxy
     state: restarted
