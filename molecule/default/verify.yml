@@ -35,5 +35,12 @@
         group: root
 
     - name: Start the docker-compose stack
-      community.docker.docker_compose:
-        project_src: /var/opt/compose
+      register: docker_compose_up_result
+      changed_when: yes
+      ansible.builtin.command:
+        cmd: docker-compose up
+        chdir: /var/opt/compose
+
+    - name: Show the docker-compose up result
+      ansible.builtin.debug:
+        var: docker_compose_up_result.stdout

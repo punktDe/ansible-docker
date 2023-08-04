@@ -47,11 +47,10 @@
       ansible.builtin.apt:
         name:
           - docker-ce
+          - python3
           - docker-ce-cli
           - docker-ce-rootless-extras
           - containerd.io
-          - docker-compose
-          - docker-compose-plugin
           - pigz
   rescue:
     - name: Fix the Ubuntu Jammy error
@@ -60,6 +59,14 @@
         regexp: "fd://"
         replace: "unix://"
       when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('22.04', '>=')
+
+- name: Install python modules
+  ansible.builtin.pip:
+    name:
+      - requests
+      - 'urllib3<2'
+      - docker
+
 
 - name: Enable and start Docker
   ansible.builtin.systemd:

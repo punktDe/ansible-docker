@@ -13,3 +13,8 @@ docker:
       max-file: "2"
   daemon_environment: {}
   use_ufw: "{{ ansible_distribution == 'Ubuntu' }}"
+  compose:
+    enabled: yes
+    version: "v2.20.2"
+    url: "https://github.com/docker/compose/releases/download/{{ vars.docker.compose.version }}/docker-compose-linux-{{ ansible_architecture }}"
+    prefix: "/usr/local/bin"

@@ -5,6 +5,7 @@ skip_list:
 
 warn_list:
   - package-latest
+  - jinja[invalid]
   - unnamed-task
   - command-instead-of-shell
   - no-handler

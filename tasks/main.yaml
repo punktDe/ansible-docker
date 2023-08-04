@@ -1,8 +1,12 @@
 - name: Install docker
-  ansible.builtin.import_tasks: install.yaml
+  ansible.builtin.include_tasks: install.yaml
+
+- name: Install docker-compose v2
+  ansible.builtin.include_tasks: compose.yaml
+  when: docker.compose.enabled
 
 - name: Configure docker
-  ansible.builtin.import_tasks: config.yaml
+  ansible.builtin.include_tasks: config.yaml
 
 - name: Configure DNS for docker
-  ansible.builtin.import_tasks: dns.yaml
+  ansible.builtin.include_tasks: dns.yaml
