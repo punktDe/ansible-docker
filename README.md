@@ -9,6 +9,7 @@ Compatible with Ubuntu 20.04 and 22.04
 ### Usage
 Create a template in the role that manages your docker container with the following contents:
 ```
+#jinja2: trim_blocks: False
 {%- import (role_path + "/../docker/templates/systemd/container.service")|relpath(playbook_dir) as service with context -%}
 {{ service.All(example_container) }}
 ```
