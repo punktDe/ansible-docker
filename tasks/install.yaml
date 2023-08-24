@@ -48,6 +48,7 @@
         name:
           - docker-ce
           - python3
+          - python3-pip
           - docker-ce-cli
           - docker-ce-rootless-extras
           - containerd.io
