@@ -64,15 +64,15 @@
 - name: Install python modules
   block:
     - name: Install python modules (pip)
-      ansible.builtin.apt:
-        update_cache: yes
+      ansible.builtin.pip:
         name:
           - requests
           - 'urllib3<2'
           - docker
   rescue:
     - name: Install python modules (apt)
-      ansible.builtin.pip:
+      ansible.builtin.apt:
+        update_cache: yes
         name:
           - python3-requests
           - python3-urllib3
