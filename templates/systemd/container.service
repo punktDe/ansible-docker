@@ -53,6 +53,9 @@ ExecStartPre=docker create --name={{ container.container_name }} --rm \
              {%- if container.network|default(none) %}
              --network={{ container.network|quote }} \
              {%- endif %}
+              {%- if container.ip|default(none) %}
+             --ip={{ container.ip|quote }} \
+             {%- endif %}
              {%- if container.entrypoint|default(none) %}
              --entrypoint={{ container.entrypoint|quote }} \
              {%- endif %}
