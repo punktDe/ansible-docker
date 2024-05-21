@@ -9,7 +9,7 @@
     mode: "0644"
 
 - name: Template the docket-network script
-  ansible.builtin.file:
+  ansible.builtin.template:
     path: "/usr/local/bin/docker-network.sh"
     src: "docker-network.sh"
     mode: "0755"
