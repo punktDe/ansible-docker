@@ -3,7 +3,7 @@ Requires=docker.service
 After=docker.service
 
 [Service]
-Restart=always
+Type=simple
 RestartSec=10
 TimeoutStopSec=60
 ExecStart=/usr/local/bin/docker-network.sh start {{ item.name }} {{ item.subnet }} {{ item.driver | default("bridge") }}
