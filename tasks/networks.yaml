@@ -9,9 +9,9 @@
     mode: "0644"
 
 - name: Template the docket-network script
-  ansible.builtin.template:
+  ansible.builtin.copy:
     dest: "/usr/local/bin/docker-network.sh"
-    src: "docker-network.sh"
+    src: "files/docker-network.sh"
     mode: "0755"
     owner: root
 
