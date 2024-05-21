@@ -51,16 +51,22 @@ ExecStartPre=docker create --name={{ container.container_name }} --rm \
              --env={{ variable|quote }}={{ value|quote }} \
              {%- endfor %}
 
+
+             {%- if container.network | default(none) %}
              {%- if container.network is mapping %}
+
              {%- if container.network.name|default(none) %}
              --network={{ container.network.name|quote }} \
              {%- endif %}
+
              {%- if container.network.ip|default(none) %}
              --ip={{ container.network.ip|quote }} \
              {%- endif %}
+
              {%- else %}
-             {%- if container.network | default(none) %}
+
              --network={{ container.network | quote }} \
+
              {%- endif %}
              {%- endif %}
 
@@ -89,14 +95,11 @@ WantedBy=docker.service
 
 {%- if container.network | default(none) %}
 {%- if container.network is mapping and (container.network.name | default(none)) %}
-Requires={{ container.network.name }}
+Requires=docker-network@{{ container.network.name }}.service
 {%- else %}
-{%- if container.network is not mapping and container.network != host %}
-Requires={{ container.network }}
-{% -endif %}
-
-
-{% endif %}
+Requires=docker-network@{{ container.network }}.service
+{%- endif %}
+{%- endif %}
 
 
 {{ Service(container) }}
