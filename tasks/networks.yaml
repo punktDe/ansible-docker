@@ -10,7 +10,7 @@
 
 - name: Template the docket-network script
   ansible.builtin.template:
-    path: "/usr/local/bin/docker-network.sh"
+    dest: "/usr/local/bin/docker-network.sh"
     src: "docker-network.sh"
     mode: "0755"
     owner: root
