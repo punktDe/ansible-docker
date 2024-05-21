@@ -1,10 +1,10 @@
 ---
-- name: Create docker networks
+- name: Template the docker network creation services
   loop: "{{ docker.networks }}"
   register: docker_network_template_config_result
   ansible.builtin.template:
     src: systemd/docker-network.service
-    dest: "/etc/systemd/system/docker-network@{{ item.name }}"
+    dest: "/etc/systemd/system/docker-network@{{ item.name }}.service"
     owner: root
     mode: "0644"
 
