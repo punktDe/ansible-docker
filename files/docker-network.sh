@@ -20,22 +20,33 @@ case $action in
     rm -f $containers_in_network
     ;;
   reload)
-    containers_in_network=`docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network_name`
-    for i in $containers_in_network; do 
-      docker network disconnect -f $network_name $i; 
-    done;
+    containers_in_network=`docker network inspect -f '{{range .Containers}}{{.Name}} {{.IPv4Address}} {{end}}' $network_name`
+
+    while IFS= read -r line; do 
+      container=`echo $line | awk '{print $1}'`
+      docker network disconnect -f $network_name $container; 
+    done <<< "$containers_in_network"
+
     docker network rm $network_name
     docker network create --driver=$driver --subnet=$subnet $network_name
-    for i in $containers_in_network; do 
-      docker network connect $network_name $i; 
-    done;
+
+    while IFS= read -r line; do 
+      container=`echo $line | awk '{print $1}'`
+      ip=`echo $line | awk '{print substr($2, 1, (length($2)-3))}'`
+      docker network connect $network_name $container --ip $ip; 
+    done <<< "$containers_in_network"
     ;;
   stop)
-    containers_in_network=`docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network_name`
+    containers_in_network=`docker network inspect -f '{{range .Containers}}{{.Name}} {{.IPv4Address}} {{end}}' $network_name`
+
+
     echo $containers_in_network > "$tempfolder/containers_in_network_$network_name"
-    for i in $containers_in_network; do 
-      docker network disconnect -f $network_name $i; 
-    done;
+
+    while IFS= read -r line; do 
+      container=`echo $line | awk '{print $1}'`
+      docker network disconnect -f $network_name $container; 
+    done <<< "$containers_in_network"
+
     docker network rm $network_name
     ;;
 esac
