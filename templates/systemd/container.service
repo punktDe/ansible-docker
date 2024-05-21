@@ -67,6 +67,9 @@ ExecStartPre=docker create --name={{ container.container_name }} --rm \
              {%- if container.entrypoint|default(none) %}
              --entrypoint={{ container.entrypoint|quote }} \
              {%- endif %}
+             {%- for dependency in container.depends_on | default([]) %}
+             Wants={{ dependency }}.service
+             {%- endfor %}
              {{ container.image|quote }}{{ '' if not container.command|default(none) or container.command.items()|rejectattr('1', 'eq', none)|first|default(none) is none else ' \\' }}
              {%- for _, argument in (container.command.items()|rejectattr('1', 'eq', none) if container.command|default(none) else []) %}
              {{ argument|quote }}{% if not loop.last %} \{%- endif %}

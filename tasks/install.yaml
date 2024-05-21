@@ -62,12 +62,21 @@
       when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('22.04', '>=')
 
 - name: Install python modules
-  ansible.builtin.pip:
-    name:
-      - requests
-      - 'urllib3<2'
-      - docker
-
+  block:
+    - name: Install python modules (pip)
+      ansible.builtin.pip:
+        name:
+          - requests
+          - 'urllib3<2'
+          - docker
+  rescue:
+    - name: Install python modules (apt)
+      ansible.builtin.apt:
+        update_cache: yes
+        name:
+          - python3-requests
+          - python3-urllib3
+          - python3-docker
 
 - name: Enable and start Docker
   ansible.builtin.systemd:
