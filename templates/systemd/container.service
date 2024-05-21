@@ -50,12 +50,20 @@ ExecStartPre=docker create --name={{ container.container_name }} --rm \
              {%- for variable, value in (container.environment.items()|rejectattr('1', 'eq', none) if container.environment|default(none) else []) %}
              --env={{ variable|quote }}={{ value|quote }} \
              {%- endfor %}
-             {%- if container.network|default(none) %}
-             --network={{ container.network|quote }} \
+
+             {%- if container.network is mapping %}
+             {%- if container.network.name|default(none) %}
+             --network={{ container.network.name|quote }} \
              {%- endif %}
-              {%- if (container.ip|default(none)) and (container.network|default(none)) %}
-             --ip={{ container.ip|quote }} \
+             {%- if container.network.ip|default(none) %}
+             --ip={{ container.network.ip|quote }} \
              {%- endif %}
+             {%- else %}
+             {%- if container.network | default(none) %}
+             --network={{ container.network | quote }} \
+             {%- endif %}
+             {%- endif %}
+
              {%- if container.entrypoint|default(none) %}
              --entrypoint={{ container.entrypoint|quote }} \
              {%- endif %}
@@ -75,6 +83,18 @@ WantedBy=docker.service
 
 {% macro All(container) -%}
 {{ Unit(container) }}
+
+{%- if container.network | default(none) %}
+{%- if container.network is mapping and (container.network.name | default(none)) %}
+Requires={{ container.network.name }}
+{%- else %}
+{%- if container.network is not mapping and container.network != host %}
+Requires={{ container.network }}
+{% -endif %}
+
+
+{% endif %}
+
 
 {{ Service(container) }}
 

@@ -1,0 +1,31 @@
+---
+- name: Create docker networks
+  loop: "{{ docker.networks }}"
+  register: docker_network_template_config_result
+  ansible.builtin.template:
+    src: systemd/docker-network.service
+    dest: "/etc/systemd/system/docker-network@{{ item.name }}"
+    owner: root
+    mode: "0644"
+
+- name: Template the docket-network script
+  ansible.builtin.file:
+    path: "/usr/local/bin/docker-network.sh"
+    src: "docker-network.sh"
+    mode: "0755"
+    owner: root
+
+- name: Activate the docker network services
+  loop: "{{ docker.networks }}"
+  ansible.builtin.service:
+    name: "docker-network@{{ item.name }}.service"
+    state: started
+    daemon_reload: yes
+
+- name: Reload docker-network@{{ item.name }}.service
+  loop: "{{ docker.networks }}"
+  when: docker_network_template_config_result.changed
+  ansible.builtin.service:
+    name: docker-network@{{ item.name }}.service
+    daemon_reload: yes
+    state: reloaded

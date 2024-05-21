@@ -1,0 +1,11 @@
+[Unit]
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+RestartSec=10
+TimeoutStopSec=60
+ExecStart=/usr/local/bin/docker-network.sh start {{ item.name }} {{ item.subnet }} {{ item.driver | default("bridge") }}
+ExecReload=/usr/local/bin/docker-network.sh reload {{ item.name }} {{ item.subnet }} {{ item.driver | default("bridge") }}
+ExecStop=/usr/local/bin/docker-network.sh stop {{ item.name }} {{ item.subnet }} {{ item.driver | default("bridge") }}

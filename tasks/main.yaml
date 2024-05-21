@@ -10,3 +10,7 @@
 
 - name: Configure DNS for docker
   ansible.builtin.include_tasks: dns.yaml
+
+- name: Configure docker networks
+  when: docker.networks
+  ansible.builtin.include_tasks: networks.yaml
