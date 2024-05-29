@@ -17,8 +17,10 @@
 
 - name: Activate the docker network services
   loop: "{{ docker.networks }}"
+  register: docker_network_activated
   ansible.builtin.service:
     name: "docker-network@{{ item.name }}.service"
+    enabled: yes
     state: started
     daemon_reload: yes
 

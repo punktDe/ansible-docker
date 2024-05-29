@@ -22,19 +22,23 @@ case $action in
   reload)
     containers_in_network=`docker network inspect -f '{{range .Containers}}{{.Name}} {{.IPv4Address}} {{end}}' $network_name`
 
-    while IFS= read -r line; do 
-      container=`echo $line | awk '{print $1}'`
-      docker network disconnect -f $network_name $container; 
-    done <<< "$containers_in_network"
+    if [[ -n "$containers_in_network" ]]; then
+      while IFS= read -r line; do 
+        container=`echo $line | awk '{print $1}'`
+        docker network disconnect -f $network_name $container; 
+      done <<< "$containers_in_network"
+    fi
 
     docker network rm $network_name
     docker network create --driver=$driver --subnet=$subnet $network_name
 
-    while IFS= read -r line; do 
-      container=`echo $line | awk '{print $1}'`
-      ip=`echo $line | awk '{print substr($2, 1, (length($2)-3))}'`
-      docker network connect $network_name $container --ip $ip; 
-    done <<< "$containers_in_network"
+    if [[ -n "$containers_in_network" ]]; then
+      while IFS= read -r line; do 
+        container=`echo $line | awk '{print $1}'`
+        ip=`echo $line | awk '{print substr($2, 1, (length($2)-3))}'`
+        docker network connect $network_name $container --ip $ip; 
+      done <<< "$containers_in_network"
+    fi
     ;;
   stop)
     containers_in_network=`docker network inspect -f '{{range .Containers}}{{.Name}} {{.IPv4Address}} {{end}}' $network_name`
@@ -42,10 +46,12 @@ case $action in
 
     echo $containers_in_network > "$tempfolder/containers_in_network_$network_name"
 
-    while IFS= read -r line; do 
-      container=`echo $line | awk '{print $1}'`
-      docker network disconnect -f $network_name $container; 
-    done <<< "$containers_in_network"
+    if [[ -n "$containers_in_network" ]]; then
+      while IFS= read -r line; do 
+        container=`echo $line | awk '{print $1}'`
+        docker network disconnect -f $network_name $container; 
+      done <<< "$containers_in_network"
+    fi
 
     docker network rm $network_name
     ;;
