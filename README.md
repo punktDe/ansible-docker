@@ -49,11 +49,41 @@ keycloak:
     echo "hello world"
 ```
 
-* Finally, provision the service file:
+Finally, provision the service file:
 ```yaml
 - name: Install systemd service for Keycloak
   template:
     src: keycloak.service
     dest: "/etc/systemd/system/keycloak.service"
     trim_blocks: no
+```
+
+
+### Custom networks
+This role can be used to create custom Docker networks in the following format:
+```yaml
+docker:
+  networks:
+    - name: example_network
+      subnet: 10.22.11.0/24
+    - name: example_network_2
+      subnet: 172.156.11.0/24
+```
+
+The networks will then be created automatically on system boot using SystemD services.
+
+A container can then be connected to a network as follows:
+```yaml
+example_container:
+  network:
+    name: example_network
+    ip: 10.22.11.21
+```
+
+If the appropriate network exists, its SystemD service will be added as a dependency to the container's service.
+
+Alternatively, if you'd like to omit the IP address (for example, with `host` network), the following structure can be used:
+```yaml
+example_container:
+  network: example_network
 ```
