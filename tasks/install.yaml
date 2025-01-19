@@ -37,7 +37,7 @@
   ansible.builtin.deb822_repository:
     name: "docker"
     uris: "{{ docker.repository.apt }}"
-    signed_by: "{{ mariadb.repository.apt.key_url }}"
+    signed_by: "{{ docker.repository.key }}"
     types: [deb]
     components: [stable]
     suites: '{{ ansible_distribution_release }}'
