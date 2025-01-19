@@ -27,18 +27,27 @@
     state: present
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('20.04', '>=')
 
-- name: Add Docker apt key
-  ansible.builtin.get_url:
-    url: "{{ docker.repository.key }}"
-    dest: /etc/apt/trusted.gpg.d/docker.asc
-    mode: '0644'
-    force: true
+- name: Remove the legacy Docker repository
+  ansible.builtin.file:
+    dest: /etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list
+    state: absent
 
 - name: Add Docker repository
-  ansible.builtin.apt_repository:
-    repo: "{{ docker.repository.apt }}"
+  register: mariadb_add_apt_repository
+  ansible.builtin.deb822_repository:
+    name: "docker"
+    uris: "{{ docker.repository.apt }}"
+    signed_by: "{{ mariadb.repository.apt.key_url }}"
+    types: [deb]
+    components: [stable]
+    suites: '{{ ansible_distribution_release }}'
     state: present
-    update_cache: true
+    enabled: yes
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: mariadb_add_apt_repository.changed
 
 - name: Install Docker, docker-compose and pigz
   block:
