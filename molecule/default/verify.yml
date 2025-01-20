@@ -38,7 +38,7 @@
       register: docker_compose_up_result
       changed_when: yes
       ansible.builtin.command:
-        cmd: docker-compose up
+        cmd: docker compose up
         chdir: /var/opt/compose
 
     - name: Show the docker-compose up result

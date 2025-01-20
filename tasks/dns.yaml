@@ -30,7 +30,7 @@
   loop: "{{ [docker['daemon.json']['default-address-pools'][0]['base']] | product(['tcp', 'udp']) | list }}"
   community.general.ufw:
     from_ip: "{{ item.0 }}"
-    to_ip: "{{ item.0 | ipaddr(1) | ipaddr('address') }}"
+    to_ip: "{{ item.0 | ansible.utils.ipaddr(1) | ansible.utils.ipaddr('address') }}"
     proto: "{{ item.1 }}"
     port: "53"
     rule: allow

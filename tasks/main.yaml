@@ -1,10 +1,6 @@
 - name: Install docker
   ansible.builtin.include_tasks: install.yaml
 
-- name: Install docker-compose v2
-  ansible.builtin.include_tasks: compose.yaml
-  when: docker.compose.enabled
-
 - name: Configure docker
   ansible.builtin.include_tasks: config.yaml
 

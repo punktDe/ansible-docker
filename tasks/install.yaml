@@ -3,6 +3,8 @@
     name:
       - docker
       - docker-engine
+      - docker-compose
+      - docker-compose-v2
     state: absent
 
 - name: Ensure dependencies are installed
@@ -11,6 +13,7 @@
     name:
       - apt-transport-https
       - ca-certificates
+      - python3-debian
     state: present
 
 - name: Ensure additional dependencies are installed (on Ubuntu < 20.04 and any other systems)
@@ -27,20 +30,29 @@
     state: present
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('20.04', '>=')
 
-- name: Add Docker apt key
-  ansible.builtin.get_url:
-    url: "{{ docker.repository.key }}"
-    dest: /etc/apt/trusted.gpg.d/docker.asc
-    mode: '0644'
-    force: true
+- name: Remove the legacy Docker repository
+  ansible.builtin.file:
+    dest: /etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list
+    state: absent
 
 - name: Add Docker repository
-  ansible.builtin.apt_repository:
-    repo: "{{ docker.repository.apt }}"
+  register: mariadb_add_apt_repository
+  ansible.builtin.deb822_repository:
+    name: "docker"
+    uris: "{{ docker.repository.apt }}"
+    signed_by: "{{ docker.repository.key }}"
+    types: [deb]
+    components: [stable]
+    suites: '{{ ansible_distribution_release }}'
     state: present
-    update_cache: true
+    enabled: yes
 
-- name: Install Docker, docker-compose and pigz
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: mariadb_add_apt_repository.changed
+
+- name: Install Docker and dependencies
   block:
     - name: Attempt installation
       ignore_errors: "{{ ansible_check_mode }}"
@@ -77,6 +89,16 @@
           - python3-requests
           - python3-urllib3
           - python3-docker
+
+- name: Ensure the manually installed docker-compose is absent
+  ansible.builtin.file:
+    path: /usr/local/bin/docker-compose
+    state: absent
+
+- name: Install docker-compose v2
+  when: docker.compose.enabled
+  ansible.builtin.package:
+    name: docker-compose-plugin
 
 - name: Enable and start Docker
   ansible.builtin.systemd:
