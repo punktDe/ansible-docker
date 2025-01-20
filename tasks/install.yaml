@@ -3,6 +3,8 @@
     name:
       - docker
       - docker-engine
+      - docker-compose
+      - docker-compose-v2
     state: absent
 
 - name: Ensure dependencies are installed
@@ -50,7 +52,7 @@
     update_cache: yes
   when: mariadb_add_apt_repository.changed
 
-- name: Install Docker, docker-compose and pigz
+- name: Install Docker and dependencies
   block:
     - name: Attempt installation
       ignore_errors: "{{ ansible_check_mode }}"
@@ -87,6 +89,16 @@
           - python3-requests
           - python3-urllib3
           - python3-docker
+
+- name: Ensure the manually installed docker-compose is absent
+  ansible.builtin.file:
+    path: /usr/local/bin/docker-compose
+    state: absent
+
+- name: Install docker-compose v2
+  when: docker.compose.enabled
+  ansible.builtin.package:
+    name: docker-compose-plugin
 
 - name: Enable and start Docker
   ansible.builtin.systemd:
