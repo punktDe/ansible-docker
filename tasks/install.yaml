@@ -36,7 +36,7 @@
     state: absent
 
 - name: Add Docker repository
-  register: mariadb_add_apt_repository
+  register: docker_add_apt_repository
   ansible.builtin.deb822_repository:
     name: "docker"
     uris: "{{ docker.repository.apt }}"
@@ -50,7 +50,7 @@
 - name: Update apt cache
   ansible.builtin.apt:
     update_cache: yes
-  when: mariadb_add_apt_repository.changed
+  when: docker_add_apt_repository.changed
 
 - name: Install Docker and dependencies
   block:
