@@ -1,7 +1,8 @@
+---
 docker:
   repository:
-    apt: "https://download.docker.com/linux/{{ ansible_distribution | lower }}"
-    key: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+    apt: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}"
+    key: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
   daemon.json:
     dns:
       - 100.96.0.1
@@ -12,6 +13,4 @@ docker:
       max-size: 2m
       max-file: "2"
   daemon_environment: {}
-  use_ufw: "{{ ansible_distribution == 'Ubuntu' }}"
-  compose:
-    enabled: yes
+  use_ufw: "{{ ansible_facts['distribution'] == 'Ubuntu' }}"

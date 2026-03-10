@@ -1,0 +1,56 @@
+---
+argument_specs:
+  main:
+    short_description: "The main entry point for the docker role."
+    description:
+      - "Installs Docker CE from the official Docker repository, configures the Docker daemon,"
+      - "sets up DNS resolution for containers via dnsmasq, and optionally configures UFW firewall rules."
+    options:
+      docker:
+        type: dict
+        required: true
+        description: "Docker configuration."
+        options:
+          repository:
+            type: dict
+            description: "Docker APT repository configuration."
+            options:
+              apt:
+                type: str
+                default: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}"
+                description: "URL of the Docker APT repository."
+              key:
+                type: str
+                default: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
+                description: "URL of the Docker APT repository GPG key."
+          daemon.json:
+            type: dict
+            description: "Docker daemon configuration. Written as JSON to `/etc/docker/daemon.json`."
+            options:
+              dns:
+                type: list
+                elements: str
+                default:
+                  - "100.96.0.1"
+                description: "List of DNS servers for containers."
+              default-address-pools:
+                type: list
+                elements: dict
+                description: "List of default address pools for Docker networks."
+                default:
+                  - base: "100.96.0.0/16"
+                    size: 24
+              log-opts:
+                type: dict
+                description: "Logging driver options for Docker containers."
+                default:
+                  max-size: "2m"
+                  max-file: "2"
+          daemon_environment:
+            type: dict
+            default: {}
+            description: "Environment variables to set for the Docker daemon via a systemd override."
+          use_ufw:
+            type: bool
+            default: "{{ ansible_facts['distribution'] == 'Ubuntu' }}"
+            description: "Whether to configure UFW firewall rules for Docker DNS resolution. Defaults to `true` on Ubuntu."

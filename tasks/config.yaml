@@ -1,3 +1,4 @@
+---
 - name: Template Docker daemon config
   ansible.builtin.copy:
     content: "{{ docker['daemon.json'] | to_nice_json }}"
