@@ -1,10 +1,74 @@
-# punktDe/ansible-docker
+<!-- BEGIN_ANSIBLE_DOCS -->
+<!--
+Do not edit README.md directly!
 
-A Docker role which can be used to deploy Docker containers as SystemD services.
+This file is generated automatically by aar-doc and will be overwritten.
 
-Installs the latest version of Docker from the official repos
+Please edit meta/argument_specs.yml instead.
+-->
+# ansible-docker
 
-Compatible with Ubuntu 22.04 & 24.04, as well as Debian 12.
+docker role for Proserver
+
+## Supported Operating Systems
+
+- Debian 12, 13
+- Ubuntu 24.04, 22.04
+- FreeBSD [Proserver](https://infrastructure.punkt.de/de/produkte/proserver.html)
+
+## Role Arguments
+
+
+
+Installs Docker CE from the official Docker repository, configures the Docker daemon,
+
+sets up DNS resolution for containers via dnsmasq, and optionally configures UFW firewall rules.
+
+#### Options for `docker`
+
+|Option|Description|Type|Required|Default|
+|---|---|---|---|---|
+| `repository` | Docker APT repository configuration. | dict of 'repository' options | no |  |
+| `daemon.json` | Docker daemon configuration. Written as JSON to `/etc/docker/daemon.json`. | dict of 'daemon.json' options | no |  |
+| `daemon_environment` | Environment variables to set for the Docker daemon via a systemd override. | dict | no |  |
+| `use_ufw` | Whether to configure UFW firewall rules for Docker DNS resolution. Defaults to `true` on Ubuntu. | bool | no | {{ ansible_facts['distribution'] == 'Ubuntu' }} |
+
+#### Options for `docker.repository`
+
+|Option|Description|Type|Required|Default|
+|---|---|---|---|---|
+| `apt` | URL of the Docker APT repository. | str | no | https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }} |
+| `key` | URL of the Docker APT repository GPG key. | str | no | https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg |
+
+#### Options for `docker.daemon.json`
+
+|Option|Description|Type|Required|Default|
+|---|---|---|---|---|
+| `dns` | List of DNS servers for containers. | list of 'str' | no | ['100.96.0.1'] |
+| `default-address-pools` | List of default address pools for Docker networks. | list of 'dict' | no | [{'base': '100.96.0.0/16', 'size': 24}] |
+| `log-opts` | Logging driver options for Docker containers. | dict | no | {"max-size": "2m", "max-file": "2"} |
+
+## Dependencies
+None.
+
+## Installation
+Add this role to the requirements.yml of your playbook as follows:
+```yaml
+roles:
+  - name: ansible-docker
+    src: https://github.com/punktDe/ansible-docker
+```
+
+Afterwards, install the role by running `ansible-galaxy install -r requirements.yml`
+
+## Example Playbook
+
+```yaml
+- hosts: all
+  roles:
+    - name: docker
+```
+
 
 ### Usage
 
@@ -59,3 +123,6 @@ keycloak:
     dest: "/etc/systemd/system/keycloak.service"
     trim_blocks: no
 ```
+
+
+<!-- END_ANSIBLE_DOCS -->
