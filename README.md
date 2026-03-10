@@ -14,7 +14,6 @@ docker role for Proserver
 
 - Debian 12, 13
 - Ubuntu 24.04, 22.04
-- FreeBSD [Proserver](https://infrastructure.punkt.de/de/produkte/proserver.html)
 
 ## Role Arguments
 
