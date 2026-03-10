@@ -1,61 +1,74 @@
-# punktDe/ansible-docker
+<!-- BEGIN_ANSIBLE_DOCS -->
+# Ansible Role: ansible-docker
+docker role for Proserver
 
-A Docker role which can be used to deploy Docker containers as SystemD services.
 
-Installs the latest version of Docker from the official repos
+## Requirements
 
-Compatible with Ubuntu 22.04 & 24.04, as well as Debian 12.
+| Platform | Versions |
+| -------- | -------- |
 
-### Usage
+## Role Arguments
 
-The following example describes setting up a Keycloak container.
 
-For a full example, please refer to our [ansible-keycloak](https://github.com/punktDe/ansible-keycloak) role
+### Entrypoint: main
 
-- Create a template in the role that manages your docker container with the following contents:
+The main entry point for the docker role.
 
-```jinja2
-{%- import (role_path + "/../docker/templates/systemd/container.service")|relpath(playbook_dir) as service with context -%}
-{{ service.All(keycloak) }}
+Installs Docker CE from the official Docker repository, configures the Docker daemon,
+
+sets up DNS resolution for containers via dnsmasq, and optionally configures UFW firewall rules.
+
+|Option|Description|Type|Required|Default|
+|---|---|---|---|---|
+| docker | Docker configuration. | dict of 'docker' options | yes |  |
+
+#### Options for main > docker
+
+|Option|Description|Type|Required|Default|
+|---|---|---|---|---|
+| repository | Docker APT repository configuration. | dict of 'repository' options | no |  |
+| daemon.json | Docker daemon configuration. Written as JSON to `/etc/docker/daemon.json`. | dict of 'daemon.json' options | no |  |
+| daemon_environment | Environment variables to set for the Docker daemon via a systemd override. | dict | no |  |
+| use_ufw | Whether to configure UFW firewall rules for Docker DNS resolution. Defaults to `true` on Ubuntu. | bool | no | {{ ansible_facts['distribution'] == 'Ubuntu' }} |
+
+#### Options for main > docker > repository
+
+|Option|Description|Type|Required|Default|
+|---|---|---|---|---|
+| apt | URL of the Docker APT repository. | str | no | https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }} |
+| key | URL of the Docker APT repository GPG key. | str | no | https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg |
+
+#### Options for main > docker > daemon.json
+
+|Option|Description|Type|Required|Default|
+|---|---|---|---|---|
+| dns | List of DNS servers for containers. | list of 'str' | no | ['100.96.0.1'] |
+| default-address-pools | List of default address pools for Docker networks. | list of 'dict' | no | [{'base': '100.96.0.0/16', 'size': 24}] |
+| log-opts | Logging driver options for Docker containers. | dict | no | {"max-size": "2m", "max-file": "2"} |
+
+
+
+## Dependencies
+None.
+
+## Example Playbook
+
+```
+- hosts: all
+  tasks:
+    - name: Importing role: ansible-docker
+      ansible.builtin.import_role:
+        name: ansible-docker
+      vars:
+        docker: # required, type: dict of 'docker' options
 ```
 
-- Configure the container parameters using Ansible variables. You can add other arbitrary variables to the root of the `keycloak` dictionary (in this case, `domain` and `prefix`), and refer to them inside the same dictionary using the `vars.` prefix:
+## License
 
-```yaml
-keycloak:
-  domain: auth.example.com
-  prefix:
-    opt: /var/opt/keycloak
-  container_name: keycloak
-  image: quay.io/keycloak/keycloak:latest
-  container_stop_timeout: 55
-  depends_on:
-    - postgresql
-    - nginx
-  volumes:
-    "/opt/keycloak/conf":
-      host_dir: "{{ vars.keycloak.prefix.opt | quote }}/conf"
-      relabel: unshared
-      read_only: yes
-    "/opt/keycloak/themes":
-      host_dir: "{{ vars.keycloak.prefix.opt | quote }}/current/themes"
-    "/opt/keycloak/providers":
-      host_dir: "{{ vars.keycloak.prefix.opt | quote }}/current/providers"
-  ports:
-    127.0.0.1:8080: 8080
-  environment:
-    KEYCLOAK_FRONTEND_URL: "https://{{ vars.keycloak.domain }}/auth"
-    KC_PROXY: "edge"
-  entrypoint: /bin/kc.sh start-dev
-  command: echo "hello world"
-```
+MIT
 
-- Finally, provision the service file:
+## Author and Project Information
+punkt.de
 
-```yaml
-- name: Install systemd service for Keycloak
-  template:
-    src: keycloak.service
-    dest: "/etc/systemd/system/keycloak.service"
-    trim_blocks: no
-```
+<!-- END_ANSIBLE_DOCS -->
