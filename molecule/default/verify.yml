@@ -5,24 +5,23 @@
   tasks:
     - name: Check docker CLI is installed
       changed_when: false
-      ansible.builtin.shell: command -v docker
+      ansible.builtin.command: docker --version
 
     - name: Check dockerd binary is installed
       changed_when: false
-      ansible.builtin.shell: command -v dockerd
+      ansible.builtin.command: dockerd --version
 
-    - name: Check docker service is enabled
-      changed_when: false
-      ansible.builtin.command: systemctl is-enabled docker
+    - name: Get service facts
+      ansible.builtin.service_facts:
 
-    - name: Check docker service is active
-      changed_when: false
-      ansible.builtin.command: systemctl is-active docker
+    - name: Check docker service is enabled and active
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['docker.service'].status == 'enabled'
+          - ansible_facts.services['docker.service'].state == 'running'
 
-    - name: Check docker-systemd-resolved-proxy service is enabled
-      changed_when: false
-      ansible.builtin.command: systemctl is-enabled docker-systemd-resolved-proxy
-
-    - name: Check docker-systemd-resolved-proxy service is active
-      changed_when: false
-      ansible.builtin.command: systemctl is-active docker-systemd-resolved-proxy
+    - name: Check docker-systemd-resolved-proxy service is enabled and active
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['docker-systemd-resolved-proxy.service'].status == 'enabled'
+          - ansible_facts.services['docker-systemd-resolved-proxy.service'].state == 'running'
