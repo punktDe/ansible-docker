@@ -1,46 +1,27 @@
 ---
-# This is an example playbook to execute Ansible tests.
-
 - name: Verify
   hosts: all
   gather_facts: false
   tasks:
-    - name: Run hello-world container
-      community.docker.docker_container:
-        name: hello-world
-        image: hello-world
-        state: started
+    - name: Check docker CLI is installed
+      changed_when: false
+      ansible.builtin.command: docker --version
 
-    - name: Stop hello-world container
-      community.docker.docker_container:
-        name: hello-world
-        image: hello-world
-        state: stopped
+    - name: Check dockerd binary is installed
+      changed_when: false
+      ansible.builtin.command: dockerd --version
 
-    - name: Create a folder for a docker-compose stack
-      ansible.builtin.file:
-        state: directory
-        path: /var/opt/compose
-        recurse: yes
+    - name: Get service facts
+      ansible.builtin.service_facts:
 
-    - name: Template an example docker-compose stack
-      ansible.builtin.copy:
-        content: |
-          services:
-            hello_world:
-              image: hello-world
-        dest: /var/opt/compose/docker-compose.yml
-        mode: "0644"
-        owner: root
-        group: root
+    - name: Check docker service is enabled and active
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['docker.service'].status == 'enabled'
+          - ansible_facts.services['docker.service'].state == 'running'
 
-    - name: Start the docker-compose stack
-      register: docker_compose_up_result
-      changed_when: yes
-      ansible.builtin.command:
-        cmd: docker compose up
-        chdir: /var/opt/compose
-
-    - name: Show the docker-compose up result
-      ansible.builtin.debug:
-        var: docker_compose_up_result.stdout
+    - name: Check docker-systemd-resolved-proxy service is enabled and active
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['docker-systemd-resolved-proxy.service'].status == 'enabled'
+          - ansible_facts.services['docker-systemd-resolved-proxy.service'].state == 'running'

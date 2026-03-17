@@ -1,3 +1,4 @@
+---
 - name: Ensure old versions of Docker are not installed
   ansible.builtin.package:
     name:
@@ -14,21 +15,9 @@
       - apt-transport-https
       - ca-certificates
       - python3-debian
+      - gnupg
+      - curl
     state: present
-
-- name: Ensure additional dependencies are installed (on Ubuntu < 20.04 and any other systems)
-  ansible.builtin.apt:
-    update_cache: yes
-    name: gnupg2
-    state: present
-  when: ansible_distribution != 'Ubuntu' or ansible_distribution_version is version('20.04', '<')
-
-- name: Ensure additional dependencies are installed (on Ubuntu >= 20.04).
-  ansible.builtin.apt:
-    update_cache: yes
-    name: gnupg
-    state: present
-  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('20.04', '>=')
 
 - name: Remove the legacy Docker repository
   ansible.builtin.file:
@@ -43,7 +32,7 @@
     signed_by: "{{ docker.repository.key }}"
     types: [deb]
     components: [stable]
-    suites: '{{ ansible_distribution_release }}'
+    suites: '{{ ansible_facts["distribution_release"] }}'
     state: present
     enabled: yes
 
@@ -71,7 +60,7 @@
         path: /etc/systemd/system/multi-user.target.wants/docker.service
         regexp: "fd://"
         replace: "unix://"
-      when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('22.04', '>=')
+      when: ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] is version('22.04', '>=')
 
 - name: Install python modules
   block:
@@ -84,7 +73,6 @@
   rescue:
     - name: Install python modules (apt)
       ansible.builtin.apt:
-        update_cache: yes
         name:
           - python3-requests
           - python3-urllib3
@@ -94,11 +82,6 @@
   ansible.builtin.file:
     path: /usr/local/bin/docker-compose
     state: absent
-
-- name: Install docker-compose v2
-  when: docker.compose.enabled
-  ansible.builtin.package:
-    name: docker-compose-plugin
 
 - name: Enable and start Docker
   ansible.builtin.systemd:
