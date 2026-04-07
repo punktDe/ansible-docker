@@ -26,26 +26,6 @@ argument_specs:
           daemon.json:
             type: dict
             description: "Docker daemon configuration. Written as JSON to `/etc/docker/daemon.json`."
-            options:
-              dns:
-                type: list
-                elements: str
-                default:
-                  - "100.96.0.1"
-                description: "List of DNS servers for containers."
-              default-address-pools:
-                type: list
-                elements: dict
-                description: "List of default address pools for Docker networks."
-                default:
-                  - base: "100.96.0.0/16"
-                    size: 24
-              log-opts:
-                type: dict
-                description: "Logging driver options for Docker containers."
-                default:
-                  max-size: "2m"
-                  max-file: "2"
           daemon_environment:
             type: dict
             default: {}
