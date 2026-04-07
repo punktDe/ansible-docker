@@ -28,7 +28,7 @@ sets up DNS resolution for containers via dnsmasq, and optionally configures UFW
 |Option|Description|Type|Required|Default|
 |---|---|---|---|---|
 | `repository` | Docker APT repository configuration. | dict of 'repository' options | no |  |
-| `daemon.json` | Docker daemon configuration. Written as JSON to `/etc/docker/daemon.json`. | dict of 'daemon.json' options | no |  |
+| `daemon.json` | Docker daemon configuration. Written as JSON to `/etc/docker/daemon.json`. | dict | no |  |
 | `daemon_environment` | Environment variables to set for the Docker daemon via a systemd override. | dict | no |  |
 | `use_ufw` | Whether to configure UFW firewall rules for Docker DNS resolution. Defaults to `true` on Ubuntu. | bool | no | {{ ansible_facts['distribution'] == 'Ubuntu' }} |
 
@@ -38,14 +38,6 @@ sets up DNS resolution for containers via dnsmasq, and optionally configures UFW
 |---|---|---|---|---|
 | `apt` | URL of the Docker APT repository. | str | no | https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }} |
 | `key` | URL of the Docker APT repository GPG key. | str | no | https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg |
-
-#### Options for `docker.daemon.json`
-
-|Option|Description|Type|Required|Default|
-|---|---|---|---|---|
-| `dns` | List of DNS servers for containers. | list of 'str' | no | ['100.96.0.1'] |
-| `default-address-pools` | List of default address pools for Docker networks. | list of 'dict' | no | [{'base': '100.96.0.0/16', 'size': 24}] |
-| `log-opts` | Logging driver options for Docker containers. | dict | no | {"max-size": "2m", "max-file": "2"} |
 
 ## Dependencies
 None.
