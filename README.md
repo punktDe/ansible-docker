@@ -14,6 +14,7 @@ docker role for Proserver
 
 - Debian 12, 13
 - Ubuntu 24.04, 22.04
+- Ubuntu 26.04
 
 ## Role Arguments
 
