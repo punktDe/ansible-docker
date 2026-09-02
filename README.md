@@ -27,10 +27,19 @@ sets up DNS resolution for containers via dnsmasq, and optionally configures UFW
 
 |Option|Description|Type|Required|Default|
 |---|---|---|---|---|
+| `networks` | Docker networks to create. Each network is managed by its own `docker-network@<name>.service` systemd unit, so that the network is recreated on boot and containers can be given static IP addresses in it. | list of dicts of 'networks' options | no | [] |
 | `repository` | Docker APT repository configuration. | dict of 'repository' options | no |  |
 | `daemon.json` | Docker daemon configuration. Written as JSON to `/etc/docker/daemon.json`. | dict | no |  |
 | `daemon_environment` | Environment variables to set for the Docker daemon via a systemd override. | dict | no |  |
 | `use_ufw` | Whether to configure UFW firewall rules for Docker DNS resolution. Defaults to `true` on Ubuntu. | bool | no | {{ ansible_facts['distribution'] == 'Ubuntu' }} |
+
+#### Options for `docker.networks`
+
+|Option|Description|Type|Required|Default|
+|---|---|---|---|---|
+| `name` | Name of the docker network. | str | yes |  |
+| `subnet` | Subnet of the docker network in CIDR notation, for example `10.22.11.0/24`. | str | yes |  |
+| `driver` | Driver of the docker network. | str | no | bridge |
 
 #### Options for `docker.repository`
 
@@ -113,6 +122,43 @@ keycloak:
     src: keycloak.service
     dest: "/etc/systemd/system/keycloak.service"
     trim_blocks: no
+```
+
+### Custom networks
+
+Custom docker networks are declared on the role itself:
+
+```yaml
+docker:
+  networks:
+    - name: example_network
+      subnet: 10.22.11.0/24
+    - name: example_network_2
+      subnet: 172.16.11.0/24
+      driver: bridge
+```
+
+Every network gets its own `docker-network@<name>.service` unit, so the networks are
+recreated on boot before any container that needs them starts.
+
+A container is attached to a network, optionally with a static IP address, like this:
+
+```yaml
+example_container:
+  network:
+    name: example_network
+    ip: 10.22.11.21
+```
+
+The network's systemd unit is then added as a dependency of the container's own unit, and
+the container is reconnected with the same IP address whenever the network is rebuilt.
+
+If you do not need a static IP address -- for instance with the built-in `host` network --
+pass the network name as a plain string instead:
+
+```yaml
+example_container:
+  network: host
 ```
 
 

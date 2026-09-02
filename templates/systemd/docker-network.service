@@ -1,0 +1,16 @@
+[Unit]
+Description=Docker network {{ item.name }}
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+TimeoutStopSec=60
+ExecStart=/usr/local/bin/docker-network.sh start {{ item.name | quote }} {{ item.subnet | quote }} {{ item.driver | default('bridge') | quote }}
+ExecReload=/usr/local/bin/docker-network.sh reload {{ item.name | quote }} {{ item.subnet | quote }} {{ item.driver | default('bridge') | quote }}
+ExecStop=/usr/local/bin/docker-network.sh stop {{ item.name | quote }} {{ item.subnet | quote }} {{ item.driver | default('bridge') | quote }}
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=docker.service

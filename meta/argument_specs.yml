@@ -11,6 +11,27 @@ argument_specs:
         required: true
         description: "Docker configuration."
         options:
+          networks:
+            type: list
+            elements: dict
+            default: []
+            description:
+              - "Docker networks to create. Each network is managed by its own"
+              - "`docker-network@<name>.service` systemd unit, so that the network is"
+              - "recreated on boot and containers can be given static IP addresses in it."
+            options:
+              name:
+                type: str
+                required: true
+                description: "Name of the docker network."
+              subnet:
+                type: str
+                required: true
+                description: "Subnet of the docker network in CIDR notation, for example `10.22.11.0/24`."
+              driver:
+                type: str
+                default: bridge
+                description: "Driver of the docker network."
           repository:
             type: dict
             description: "Docker APT repository configuration."
