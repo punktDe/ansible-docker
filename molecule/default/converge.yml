@@ -4,7 +4,52 @@
   environment:
     GITHUB_ACTIONS: "maybe"
     ANSIBLE_HASH_BEHAVIOUR: merge
+  vars:
+    docker:
+      # Molecule's instances are containers themselves, where docker cannot stack
+      # another overlay filesystem on top of the one it is already running on.
+      # The containerd image store ignores storage-driver, so it has to go too.
+      daemon.json:
+        storage-driver: vfs
+        features:
+          containerd-snapshotter: false
+      networks:
+        - name: molecule_network
+          subnet: 10.22.11.0/24
+    molecule_static_ip:
+      container_name: molecule-static-ip
+      image: alpine:3
+      pull_on_start: true
+      network:
+        name: molecule_network
+        ip: 10.22.11.21
+      entrypoint: /bin/sh
+      command:
+        flag: "-c"
+        script: "sleep infinity"
   tasks:
     - name: "Include ansible-docker"
       ansible.builtin.include_role:
         name: "ansible-docker"
+
+    # The role starts docker before it writes daemon.json, so the restart that
+    # applies the storage driver above is still only a queued handler here.
+    # Without flushing it the test container is created on the default driver.
+    - name: Apply the pending docker restart
+      ansible.builtin.meta: flush_handlers
+
+    - name: Install the systemd service of the static IP test container
+      ansible.builtin.template:
+        src: molecule-static-ip.service
+        dest: /etc/systemd/system/molecule-static-ip.service
+        owner: root
+        group: root
+        mode: "0644"
+        trim_blocks: false
+
+    - name: Start the static IP test container
+      ansible.builtin.systemd:
+        daemon_reload: true
+        name: molecule-static-ip.service
+        enabled: true
+        state: started

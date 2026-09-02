@@ -25,3 +25,87 @@
         that:
           - ansible_facts.services['docker-systemd-resolved-proxy.service'].status == 'enabled'
           - ansible_facts.services['docker-systemd-resolved-proxy.service'].state == 'running'
+
+    # service_facts reports the 'exited' sub-state of a oneshot RemainAfterExit
+    # unit as 'stopped', so ask systemd itself whether it would need starting.
+    - name: Probe the state of the docker network service
+      check_mode: true
+      register: molecule_network_service
+      ansible.builtin.systemd:
+        name: docker-network@molecule_network.service
+        state: started
+
+    - name: Check the docker network service is enabled and already active
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['docker-network@molecule_network.service'].status == 'enabled'
+          - molecule_network_service is not changed
+
+    - name: Inspect the managed docker network
+      changed_when: false
+      ansible.builtin.command:
+        argv:
+          - docker
+          - network
+          - inspect
+          - --format
+          - "{{ '{{ (index .IPAM.Config 0).Subnet }}' }}"
+          - molecule_network
+      register: molecule_network_subnet
+
+    - name: Check the managed docker network uses the configured subnet
+      ansible.builtin.assert:
+        that:
+          - molecule_network_subnet.stdout == '10.22.11.0/24'
+
+    - name: Read the systemd service of the test container
+      ansible.builtin.slurp:
+        src: /etc/systemd/system/molecule-static-ip.service
+      register: molecule_container_unit
+
+    - name: Check the rendered service attaches the container to the network with a static IP
+      vars:
+        unit: "{{ molecule_container_unit.content | b64decode }}"
+      ansible.builtin.assert:
+        that:
+          - "'Requires=docker-network@molecule_network.service' in unit"
+          - "'After=docker-network@molecule_network.service' in unit"
+          - "'--network=molecule_network' in unit"
+          - "'--ip=10.22.11.21' in unit"
+
+    - name: Get the IP address of the test container
+      changed_when: false
+      ansible.builtin.command:
+        argv:
+          - docker
+          - inspect
+          - --format
+          - "{{ '{{ .NetworkSettings.Networks.molecule_network.IPAddress }}' }}"
+          - molecule-static-ip
+      register: molecule_container_ip
+
+    - name: Check the test container got its static IP address
+      ansible.builtin.assert:
+        that:
+          - molecule_container_ip.stdout == '10.22.11.21'
+
+    - name: Rebuild the docker network
+      ansible.builtin.systemd:
+        name: docker-network@molecule_network.service
+        state: reloaded
+
+    - name: Get the IP address of the test container after the rebuild
+      changed_when: false
+      ansible.builtin.command:
+        argv:
+          - docker
+          - inspect
+          - --format
+          - "{{ '{{ .NetworkSettings.Networks.molecule_network.IPAddress }}' }}"
+          - molecule-static-ip
+      register: molecule_container_ip_after_reload
+
+    - name: Check the test container kept its static IP address across the rebuild
+      ansible.builtin.assert:
+        that:
+          - molecule_container_ip_after_reload.stdout == '10.22.11.21'

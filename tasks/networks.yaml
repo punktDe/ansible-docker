@@ -1,0 +1,48 @@
+---
+- name: Install the docker network management script
+  ansible.builtin.copy:
+    src: docker-network.sh
+    dest: /usr/local/bin/docker-network.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Template the docker network services
+  loop: "{{ docker.networks }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: docker_network_unit_result
+  ansible.builtin.template:
+    src: systemd/docker-network.service
+    dest: "/etc/systemd/system/docker-network@{{ item.name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Reload systemd to pick up the docker network services
+  when: docker_network_unit_result is changed
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start the docker network services
+  loop: "{{ docker.networks }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: docker_network_start_result
+  ansible.builtin.systemd:
+    name: "docker-network@{{ item.name }}.service"
+    enabled: true
+    state: started
+
+# Networks that were only just started already run the current configuration,
+# reloading them would tear down and rebuild them for nothing.
+- name: Reload the docker network services whose configuration changed
+  loop: "{{ docker_network_unit_result.results | zip(docker_network_start_result.results) | list }}"
+  loop_control:
+    label: "{{ item.0.item.name }}"
+  when:
+    - item.0 is changed
+    - item.1 is not changed
+  ansible.builtin.systemd:
+    name: "docker-network@{{ item.0.item.name }}.service"
+    state: reloaded

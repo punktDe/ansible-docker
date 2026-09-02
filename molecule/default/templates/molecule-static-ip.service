@@ -1,0 +1,2 @@
+{%- import "container.service" as service with context -%}
+{{ service.All(molecule_static_ip) }}

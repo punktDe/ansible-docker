@@ -1,5 +1,6 @@
 ---
 docker:
+  networks: []
   repository:
     apt: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}"
     key: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"

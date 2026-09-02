@@ -1,7 +1,16 @@
+{% macro network_name(container) -%}
+{{- (container.network.name|default(none) if container.network is mapping else container.network) if container.network|default(none) else '' -}}
+{%- endmacro %}
+
 {% macro Unit(container) -%}
+{%- set network = network_name(container)|trim -%}
 [Unit]
 Requires=docker.service
 After=docker.service
+{%- if network and network in (docker.networks|default([]))|map(attribute='name') %}
+Requires=docker-network@{{ network }}.service
+After=docker-network@{{ network }}.service
+{%- endif %}
 {%- for dependency in container.depends_on | default([]) %}
 Wants={{ dependency }}.service
 {%- endfor %}
@@ -33,6 +42,7 @@ Wants={{ dependency }}.service
 {%- endmacro %}
 
 {% macro Service(container) -%}
+{%- set network = network_name(container)|trim -%}
 [Service]
 Restart=always
 RestartSec=10
@@ -55,8 +65,11 @@ ExecStartPre=docker create --name={{ container.container_name }} --rm \
              {%- for variable, value in (container.environment.items()|rejectattr('1', 'eq', none) if container.environment|default(none) else []) %}
              --env={{ variable|quote }}={{ value|quote }} \
              {%- endfor %}
-             {%- if container.network|default(none) %}
-             --network={{ container.network|quote }} \
+             {%- if network %}
+             --network={{ network|quote }} \
+             {%- if container.network is mapping and container.network.ip|default(none) %}
+             --ip={{ container.network.ip|quote }} \
+             {%- endif %}
              {%- endif %}
              {%- if container.entrypoint|default(none) %}
              --entrypoint={{ container.entrypoint|quote }} \
